@@ -18,6 +18,8 @@ class Game:
         self.mode = "normal"
         self.text = ""
         self.font = pygame.font.SysFont(None, 100)
+        self.change = False
+        self.delete = False
 
     def game_loop(self):
         #Game loop
@@ -29,12 +31,10 @@ class Game:
                 elif event.type == self.pygame.KEYDOWN: 
                     #If in normalmode
                     if self.mode == "normal":
-                        if event.key == self.pygame.K_i:
-                            self.mode = "insert"
-
+                        self.normal_mode(event)
                     #If in insert mode
                     else:
-                        self.insertText(event)
+                        self.insert_mode(event)
 
 
             #set frames/second
@@ -47,8 +47,62 @@ class Game:
         textSurface = self.font.render(self.text, True, self.fontColor)
         self.screen.blit(textSurface, textSurface.get_rect(center = self.screen.get_rect().center))
 
-    def insertText(self, event):
+    def insert_mode(self, event):
+        if event.key == self.pygame.K_ESCAPE:
+            self.mode = "normal"
+        
+        elif event.key == self.pygame.K_BACKSPACE:
+            self.pop_text()
+
+        else:
+            self.insert_text(event)
+
+    def normal_mode(self, event):
+        if self.change:
+            self.perform_change(event)
+
+        elif self.delete:
+            self.perform_delete(event)
+
+        else:
+            if event.key == self.pygame.K_c:
+                self.change = True
+
+            if event.key == self.pygame.K_d:
+                self.delete = True
+
+            if event.key == self.pygame.K_i:
+                self.mode = "insert"
+    
+    def perform_change(self, event):
+        if event.key == self.pygame.K_c:
+            self.delete_text(event)
+            self.mode = "insert"
+        
+        if event.key == self.pygame.K_w:
+            #add ability to change word
+            pass
+        
+        self.change = False
+
+    def perform_delete(self, event):
+        if event.key == self.pygame.K_d:
+            self.delete_text(event)
+        
+        if event.key == self.pygame.K_w:
+            #add ability to del word
+            pass
+        
+        self.delete = False
+
+    def delete_text(self, event):
+        self.text = ""
+
+    def insert_text(self, event):
         self.text += event.unicode
+
+    def pop_text(self):
+        self.text = self.text[:-1]
 
     def update(self):
         self.pygame.display.update()
