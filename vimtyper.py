@@ -1,9 +1,10 @@
 import pygame as pygame, sys
 import wordlist
+import random
 
 class Game:
 
-    def __init__(self, w, h, bgc, fc, fps):
+    def __init__(self, w, h, bgc, fc, fps, wA):
         self.pygame = pygame
         self.sys = sys
         self.fps = fps
@@ -17,9 +18,12 @@ class Game:
         self.pygame.display.set_caption("VimTyper")
         self.mode = "normal"
         self.text = ""
-        self.font = pygame.font.SysFont(None, 100)
+        self.randomWords = ""
         self.change = False
         self.delete = False
+        self.fontSize = 30
+        self.font = pygame.font.SysFont(None, self.fontSize)
+        self.wordArr = wA
 
     def game_loop(self):
         #Game loop
@@ -39,9 +43,18 @@ class Game:
 
             #set frames/second
             self.draw()
+            self.render_random_words()
             self.render_text()
             self.update()
             self.clock.tick(self.fps)
+
+    def generate_random_sample(self):
+        random_string = " ".join(random.sample(self.wordArr, 10)) 
+
+    def render_random_words(self):
+        random_string = "test 1 test 2 test 3" 
+        randomWordsSurface = self.font.render(random_string, True, self.fontColor)
+        self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(center = (self.width / 2, self.height / 6)))
 
     def render_text(self):
         textSurface = self.font.render(self.text, True, self.fontColor)
@@ -115,6 +128,7 @@ fc = (171, 171, 171)
 fps = 30
 w = 600
 h = 600
+wA = wordlist.wordArr
 
-game = Game(w, h, bgc, fc, fps)
+game = Game(w, h, bgc, fc, fps, wA)
 game.game_loop()
