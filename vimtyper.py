@@ -18,12 +18,13 @@ class Game:
         self.pygame.display.set_caption("VimTyper")
         self.mode = "normal"
         self.text = ""
-        self.randomWords = ""
+        self.randomWordsList = []
         self.change = False
         self.delete = False
         self.fontSize = 30
         self.font = pygame.font.SysFont(None, self.fontSize)
         self.wordArr = wA
+        self.generate_random_sample()
 
     def game_loop(self):
         #Game loop
@@ -49,12 +50,19 @@ class Game:
             self.clock.tick(self.fps)
 
     def generate_random_sample(self):
-        random_string = " ".join(random.sample(self.wordArr, 10)) 
-
+        self.randomWordsList = random.sample(self.wordArr, 10) 
+        
     def render_random_words(self):
-        random_string = "test 1 test 2 test 3" 
-        randomWordsSurface = self.font.render(random_string, True, self.fontColor)
+        randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
         self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(center = (self.width / 2, self.height / 6)))
+
+    def submit_word(self):
+        self.compare()
+        self.pop_word()
+        self.delete_text()
+
+    def compare(self):
+        pass
 
     def render_text(self):
         textSurface = self.font.render(self.text, True, self.fontColor)
@@ -67,6 +75,8 @@ class Game:
         elif event.key == self.pygame.K_BACKSPACE:
             self.pop_text()
 
+        elif event.key == self.pygame.K_SPACE:
+            self.submit_word()
         else:
             self.insert_text(event)
 
@@ -89,7 +99,7 @@ class Game:
     
     def perform_change(self, event):
         if event.key == self.pygame.K_c:
-            self.delete_text(event)
+            self.delete_text()
             self.mode = "insert"
         
         if event.key == self.pygame.K_w:
@@ -100,7 +110,7 @@ class Game:
 
     def perform_delete(self, event):
         if event.key == self.pygame.K_d:
-            self.delete_text(event)
+            self.delete_text()
         
         if event.key == self.pygame.K_w:
             #add ability to del word
@@ -108,7 +118,7 @@ class Game:
         
         self.delete = False
 
-    def delete_text(self, event):
+    def delete_text(self):
         self.text = ""
 
     def insert_text(self, event):
@@ -116,6 +126,10 @@ class Game:
 
     def pop_text(self):
         self.text = self.text[:-1]
+
+    def pop_word(self):
+        if self.randomWordsList:
+            self.randomWordsList.pop(0)
 
     def update(self):
         self.pygame.display.update()
