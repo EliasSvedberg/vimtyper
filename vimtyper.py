@@ -24,7 +24,7 @@ class Game:
         self.fontSize = 30
         self.font = pygame.font.SysFont(None, self.fontSize)
         self.wordArr = wA
-        self.generate_random_sample()
+        self.generate_random_sample(7)
 
     def game_loop(self):
         #Game loop
@@ -49,16 +49,17 @@ class Game:
             self.update()
             self.clock.tick(self.fps)
 
-    def generate_random_sample(self):
-        self.randomWordsList = random.sample(self.wordArr, 10) 
+    def generate_random_sample(self, count):
+        self.randomWordsList.extend(random.sample(self.wordArr, count)) 
         
     def render_random_words(self):
         randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
-        self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(center = (self.width / 2, self.height / 6)))
+        self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 4 , self.height // 6)))
 
     def submit_word(self):
         self.compare()
         self.pop_word()
+        self.generate_random_sample(1)
         self.delete_text()
 
     def compare(self):
