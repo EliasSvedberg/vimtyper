@@ -18,13 +18,18 @@ class Game:
         self.pygame.display.set_caption("VimTyper")
         self.mode = "normal"
         self.text = ""
+        self.timerText = "1:00"
         self.randomWordsList = []
         self.change = False
         self.delete = False
         self.fontSize = 30
+        self.bigFontSize = 50
         self.font = pygame.font.SysFont(None, self.fontSize)
+        self.bigFont = pygame.font.SysFont(None, self.bigFontSize)
         self.wordArr = wA
-        self.generate_random_sample(7)
+        self.generate_random_sample(5)
+        self.start_ticks = None
+        self.comparelist = []
 
     def game_loop(self):
         #Game loop
@@ -33,7 +38,11 @@ class Game:
                 if event.type == self.pygame.QUIT: #The user closed the window!
                     self.pygame.quit()
                     self.sys.exit() #Stop running
+                
                 elif event.type == self.pygame.KEYDOWN: 
+                    #Start timer
+                    if not self.start_ticks:
+                        self.start_ticks = self.pygame.time.get_ticks()
                     #If in normalmode
                     if self.mode == "normal":
                         self.normal_mode(event)
@@ -46,6 +55,9 @@ class Game:
             self.draw()
             self.render_random_words()
             self.render_text()
+            if self.start_ticks:
+                self.render_timer()
+                self.update_timer()
             self.update()
             self.clock.tick(self.fps)
 
@@ -63,11 +75,30 @@ class Game:
         self.delete_text()
 
     def compare(self):
-        pass
+        if self.text == self.randomWordsList[0]:
+            self.comparelist.append(1)
+        else:
+            self.comparelist.append(0)
 
     def render_text(self):
         textSurface = self.font.render(self.text, True, self.fontColor)
         self.screen.blit(textSurface, textSurface.get_rect(center = self.screen.get_rect().center))
+
+    def update_timer(self):
+        self.unformattedTimer = 60 - (self.pygame.time.get_ticks() - self.start_ticks)// 1000
+
+        if self.unformattedTimer >= 10:
+            self.timerText = "0:" + str(self.unformattedTimer)
+        
+        elif self.unformattedTimer > 0:
+            self.timerText = "0:0" + str(self.unformattedTimer)
+        else:
+            self.timerText = "1:00"
+        #fix timer updating
+
+    def render_timer(self):
+        timeSurface = self.bigFont.render(self.timerText , True, self.fontColor)
+        self.screen.blit(timeSurface, timeSurface.get_rect(center = (self.width // 2 , self.height // 10)))
 
     def insert_mode(self, event):
         if event.key == self.pygame.K_ESCAPE:
