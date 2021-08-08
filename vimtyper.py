@@ -1,6 +1,7 @@
 import pygame as pygame, sys
 import wordlist
 import random
+import time
 
 class Game:
 
@@ -30,6 +31,7 @@ class Game:
         self.generate_random_sample(5)
         self.start_ticks = None
         self.comparelist = []
+        self.displayScoreVar = False
 
     def game_loop(self):
         #Game loop
@@ -38,8 +40,8 @@ class Game:
                 if event.type == self.pygame.QUIT: #The user closed the window!
                     self.pygame.quit()
                     self.sys.exit() #Stop running
-                
-                elif event.type == self.pygame.KEYDOWN: 
+
+                elif event.type == self.pygame.KEYDOWN:
                     #Start timer
                     if not self.start_ticks:
                         self.start_ticks = self.pygame.time.get_ticks()
@@ -55,15 +57,29 @@ class Game:
             self.draw()
             self.render_random_words()
             self.render_text()
+            self.render_timer()
             if self.start_ticks:
-                self.render_timer()
                 self.update_timer()
+            if self.displayScoreVar:
+                self.display_score()
             self.update()
             self.clock.tick(self.fps)
 
+    def reset_game(self):
+        self.mode = "normal"
+        self.text = ""
+        self.timerText = "1:00"
+        self.randomWordsList = []
+        self.change = False
+        self.delete = False
+        self.generate_random_sample(5)
+        self.start_ticks = None
+        self.comparelist = []
+        self.displayScoreVar = False
+
     def generate_random_sample(self, count):
-        self.randomWordsList.extend(random.sample(self.wordArr, count)) 
-        
+        self.randomWordsList.extend(random.sample(self.wordArr, count))
+
     def render_random_words(self):
         randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
         self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 4 , self.height // 6)))
@@ -87,14 +103,31 @@ class Game:
     def update_timer(self):
         self.unformattedTimer = 60 - (self.pygame.time.get_ticks() - self.start_ticks)// 1000
 
-        if self.unformattedTimer >= 10:
+        if self.unformattedTimer == 60:
+            self.timerText = "1:00"
+        elif self.unformattedTimer >= 10:
             self.timerText = "0:" + str(self.unformattedTimer)
-        
+
         elif self.unformattedTimer > 0:
             self.timerText = "0:0" + str(self.unformattedTimer)
         else:
-            self.timerText = "1:00"
-        #fix timer updating
+            self.timerText = "0:00"
+            self.displayScoreVar = True
+            self.mode = "normal"
+
+    def display_score(self):
+        if self.comparelist:
+            self.percentageScoreText = "Accuracy: " + str(len(self.comparelist) // sum(self.comparelist))
+            self.wordsPerMinuteText = "WPM: " + str(sum(self.comparelist))
+
+            percentageScoreSurface = self.bigFont.render(self.percentageScoreText, True, self.fontColor)
+            self.screen.blit(percentageScoreSurface, percentageScoreSurface.get_rect(center = (self.width // 2 , self.height // 1.5)))
+
+            wpmSurface = self.bigFont.render(self.wordsPerMinuteText, True, self.fontColor)
+            self.screen.blit(wpmSurface, wpmSurface.get_rect(center = (self.width // 2 , self.height // 1.25)))
+
+            infoSurface = self.bigFont.render("Hit Enter to Restart", True, self.fontColor)
+            self.screen.blit(infoSurface, infoSurface.get_rect(center = (self.width // 2 , self.height // 1.1)))
 
     def render_timer(self):
         timeSurface = self.bigFont.render(self.timerText , True, self.fontColor)
@@ -103,7 +136,7 @@ class Game:
     def insert_mode(self, event):
         if event.key == self.pygame.K_ESCAPE:
             self.mode = "normal"
-        
+
         elif event.key == self.pygame.K_BACKSPACE:
             self.pop_text()
 
@@ -128,26 +161,29 @@ class Game:
 
             if event.key == self.pygame.K_i:
                 self.mode = "insert"
-    
+
+            if event.key == self.pygame.K_RETURN:
+                self.reset_game()
+
     def perform_change(self, event):
         if event.key == self.pygame.K_c:
             self.delete_text()
             self.mode = "insert"
-        
+
         if event.key == self.pygame.K_w:
             #add ability to change word
             pass
-        
+
         self.change = False
 
     def perform_delete(self, event):
         if event.key == self.pygame.K_d:
             self.delete_text()
-        
+
         if event.key == self.pygame.K_w:
             #add ability to del word
             pass
-        
+
         self.delete = False
 
     def delete_text(self):
