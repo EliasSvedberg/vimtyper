@@ -117,7 +117,7 @@ class Game:
 
     def display_score(self):
         if self.comparelist:
-            self.percentageScoreText = "Accuracy: " + str(len(self.comparelist) // sum(self.comparelist))
+            self.percentageScoreText = "Accuracy: " + str(sum(self.comparelist) / len(self.comparelist))
             self.wordsPerMinuteText = "WPM: " + str(sum(self.comparelist))
 
             percentageScoreSurface = self.bigFont.render(self.percentageScoreText, True, self.fontColor)
