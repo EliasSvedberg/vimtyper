@@ -58,6 +58,7 @@ class Game:
             self.render_random_words()
             self.render_text()
             self.render_timer()
+            self.render_status_bar()
             if self.start_ticks:
                 self.update_timer()
             if self.displayScoreVar:
@@ -80,6 +81,10 @@ class Game:
     def generate_random_sample(self, count):
         self.randomWordsList.extend(random.sample(self.wordArr, count))
 
+    def render_status_bar(self):
+        statusBarSurface = self.font.render(self.mode.upper(), True, (0, 0, 0))
+        self.pygame.draw.rect(self.screen, self.fontColor if self.mode == "normal" else (0, 204, 204), statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.025)))
+        self.screen.blit(statusBarSurface, statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.025)))
     def render_random_words(self):
         randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
         self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 4 , self.height // 6)))
@@ -117,17 +122,17 @@ class Game:
 
     def display_score(self):
         if self.comparelist:
-            self.percentageScoreText = "Accuracy: " + str(sum(self.comparelist) / len(self.comparelist))
+            self.percentageScoreText = "Accuracy: " + str(round(sum(self.comparelist) / len(self.comparelist), 2))
             self.wordsPerMinuteText = "WPM: " + str(sum(self.comparelist))
 
             percentageScoreSurface = self.bigFont.render(self.percentageScoreText, True, self.fontColor)
             self.screen.blit(percentageScoreSurface, percentageScoreSurface.get_rect(center = (self.width // 2 , self.height // 1.5)))
 
             wpmSurface = self.bigFont.render(self.wordsPerMinuteText, True, self.fontColor)
-            self.screen.blit(wpmSurface, wpmSurface.get_rect(center = (self.width // 2 , self.height // 1.25)))
+            self.screen.blit(wpmSurface, wpmSurface.get_rect(center = (self.width // 2 , self.height // 1.35)))
 
             infoSurface = self.bigFont.render("Hit Enter to Restart", True, self.fontColor)
-            self.screen.blit(infoSurface, infoSurface.get_rect(center = (self.width // 2 , self.height // 1.1)))
+            self.screen.blit(infoSurface, infoSurface.get_rect(center = (self.width // 2 , self.height // 1.2)))
 
     def render_timer(self):
         timeSurface = self.bigFont.render(self.timerText , True, self.fontColor)
