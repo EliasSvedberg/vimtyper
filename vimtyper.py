@@ -19,14 +19,17 @@ class Game:
         self.pygame.display.set_caption("VimTyper")
         self.mode = "normal"
         self.text = ""
+        self.commandText = ""
         self.timerText = "1:00"
         self.randomWordsList = []
         self.change = False
         self.delete = False
         self.fontSize = 30
+        self.midFontSize = 40
         self.bigFontSize = 50
         self.font = pygame.font.SysFont(None, self.fontSize)
         self.bigFont = pygame.font.SysFont(None, self.bigFontSize)
+        self.midFont = pygame.font.SysFont(None, self.midFontSize)
         self.wordArr = wA
         self.generate_random_sample(5)
         self.start_ticks = None
@@ -49,9 +52,10 @@ class Game:
                     if self.mode == "normal":
                         self.normal_mode(event)
                     #If in insert mode
-                    else:
+                    elif self.mode == "insert":
                         self.insert_mode(event)
-
+                    if self.mode == "command":
+                        self.command_mode(event)
 
             #set frames/second
             self.draw()
@@ -59,6 +63,8 @@ class Game:
             self.render_text()
             self.render_timer()
             self.render_status_bar()
+            if self.mode == "command":
+                self.render_command_text()
             if self.start_ticks:
                 self.update_timer()
             if self.displayScoreVar:
@@ -82,9 +88,9 @@ class Game:
         self.randomWordsList.extend(random.sample(self.wordArr, count))
 
     def render_status_bar(self):
-        statusBarSurface = self.font.render(self.mode.upper(), True, (0, 0, 0))
-        self.pygame.draw.rect(self.screen, self.fontColor if self.mode == "normal" else (0, 204, 204), statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.025)))
-        self.screen.blit(statusBarSurface, statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.025)))
+        statusBarSurface = self.midFont.render(self.mode.upper(), True, (0, 0, 0))
+        self.pygame.draw.rect(self.screen, self.fontColor if self.mode == "normal" else (0, 204, 204), statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.085)))
+        self.screen.blit(statusBarSurface, statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.085)))
 
     def render_random_words(self):
         randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
@@ -96,6 +102,19 @@ class Game:
         self.generate_random_sample(1)
         self.delete_text()
 
+    def submit_command(self):
+        self.perform_command()
+        self.delete_command_text()
+
+    def perform_command(self):
+        pass
+        if self.commandText == ":restart":
+            self.reset_game()
+        elif self.commandText == ":help":
+            print("you are out of luck, JK. adding some help soon")
+        else:
+            print("You entered a bad command")
+
     def compare(self):
         if self.text == self.randomWordsList[0]:
             self.comparelist.append(1)
@@ -104,7 +123,11 @@ class Game:
 
     def render_text(self):
         textSurface = self.font.render(self.text, True, self.fontColor)
-        self.screen.blit(textSurface, textSurface.get_rect(center = self.screen.get_rect().center))
+        self.screen.blit(textSurface, textSurface.get_rect(center = (self.width // 2, self.height // 3)))
+
+    def render_command_text(self):
+        commandTextSurface = self.font.render(self.commandText, True, (250, 249, 246))
+        self.screen.blit(commandTextSurface, commandTextSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.025)))
 
     def update_timer(self):
         self.unformattedTimer = 60 - (self.pygame.time.get_ticks() - self.start_ticks)// 1000
@@ -113,7 +136,6 @@ class Game:
             self.timerText = "1:00"
         elif self.unformattedTimer >= 10:
             self.timerText = "0:" + str(self.unformattedTimer)
-
         elif self.unformattedTimer > 0:
             self.timerText = "0:0" + str(self.unformattedTimer)
         else:
@@ -123,17 +145,17 @@ class Game:
 
     def display_score(self):
         if self.comparelist:
-            self.percentageScoreText = "Accuracy: " + str(round(sum(self.comparelist) / len(self.comparelist), 2) * 100) + "%"
+            self.percentageScoreText = "Accuracy: " + str(round(100 * sum(self.comparelist) / len(self.comparelist), 2)) + "%"
             self.wordsPerMinuteText = "WPM: " + str(sum(self.comparelist))
 
             percentageScoreSurface = self.bigFont.render(self.percentageScoreText, True, self.fontColor)
-            self.screen.blit(percentageScoreSurface, percentageScoreSurface.get_rect(center = (self.width // 2 , self.height // 1.5)))
+            self.screen.blit(percentageScoreSurface, percentageScoreSurface.get_rect(center = (self.width // 2 , self.height // 1.8)))
 
             wpmSurface = self.bigFont.render(self.wordsPerMinuteText, True, self.fontColor)
-            self.screen.blit(wpmSurface, wpmSurface.get_rect(center = (self.width // 2 , self.height // 1.35)))
+            self.screen.blit(wpmSurface, wpmSurface.get_rect(center = (self.width // 2 , self.height // 1.55)))
 
             infoSurface = self.bigFont.render("Hit Enter to Restart", True, self.fontColor)
-            self.screen.blit(infoSurface, infoSurface.get_rect(center = (self.width // 2 , self.height // 1.2)))
+            self.screen.blit(infoSurface, infoSurface.get_rect(center = (self.width // 2 , self.height // 1.3)))
 
     def render_timer(self):
         timeSurface = self.bigFont.render(self.timerText , True, self.fontColor)
@@ -142,10 +164,8 @@ class Game:
     def insert_mode(self, event):
         if event.key == self.pygame.K_ESCAPE:
             self.mode = "normal"
-
         elif event.key == self.pygame.K_BACKSPACE:
             self.pop_text()
-
         elif event.key == self.pygame.K_SPACE:
             self.submit_word()
         else:
@@ -154,28 +174,35 @@ class Game:
     def normal_mode(self, event):
         if self.change:
             self.perform_change(event)
-
         elif self.delete:
             self.perform_delete(event)
-
         else:
             if event.key == self.pygame.K_c:
                 self.change = True
-
             if event.key == self.pygame.K_d:
                 self.delete = True
-
             if event.key == self.pygame.K_i:
                 self.mode = "insert"
-
             if event.key == self.pygame.K_RETURN:
                 self.reset_game()
+            if event.key == self.pygame.K_PERIOD:
+                mods = self.pygame.key.get_mods()
+                if mods & self.pygame.KMOD_SHIFT:
+                    self.mode = "command"
+
+    def command_mode(self, event):
+        if event.key == self.pygame.K_ESCAPE:
+            self.mode = "normal"
+            self.commandText = ""
+        elif event.key == self.pygame.K_RETURN:
+            self.submit_command()
+        else:
+            self.insert_command_text(event)
 
     def perform_change(self, event):
         if event.key == self.pygame.K_c:
             self.delete_text()
             self.mode = "insert"
-
         if event.key == self.pygame.K_w:
             #add ability to change word
             pass
@@ -185,7 +212,6 @@ class Game:
     def perform_delete(self, event):
         if event.key == self.pygame.K_d:
             self.delete_text()
-
         if event.key == self.pygame.K_w:
             #add ability to del word
             pass
@@ -195,8 +221,14 @@ class Game:
     def delete_text(self):
         self.text = ""
 
+    def delete_command_text(self):
+        self.commandText = ""
+
     def insert_text(self, event):
         self.text += event.unicode
+
+    def insert_command_text(self, event):
+        self.commandText += event.unicode
 
     def pop_text(self):
         self.text = self.text[:-1]
