@@ -85,6 +85,7 @@ class Game:
         statusBarSurface = self.font.render(self.mode.upper(), True, (0, 0, 0))
         self.pygame.draw.rect(self.screen, self.fontColor if self.mode == "normal" else (0, 204, 204), statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.025)))
         self.screen.blit(statusBarSurface, statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.025)))
+
     def render_random_words(self):
         randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
         self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 4 , self.height // 6)))
@@ -122,7 +123,7 @@ class Game:
 
     def display_score(self):
         if self.comparelist:
-            self.percentageScoreText = "Accuracy: " + str(round(sum(self.comparelist) / len(self.comparelist), 2))
+            self.percentageScoreText = "Accuracy: " + str(round(sum(self.comparelist) / len(self.comparelist), 2) * 100) + "%"
             self.wordsPerMinuteText = "WPM: " + str(sum(self.comparelist))
 
             percentageScoreSurface = self.bigFont.render(self.percentageScoreText, True, self.fontColor)
