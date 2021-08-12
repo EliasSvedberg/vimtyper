@@ -89,7 +89,12 @@ class Game:
 
     def render_status_bar(self):
         statusBarSurface = self.midFont.render(self.mode.upper(), True, (0, 0, 0))
-        self.pygame.draw.rect(self.screen, self.fontColor if self.mode == "normal" else (0, 204, 204), statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.085)))
+        if self.mode in ("normal", "command"):
+            sbColor = self.fontColor
+        else:
+            sbColor = (0, 204, 204)
+
+        self.pygame.draw.rect(self.screen, sbColor, statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.085)))
         self.screen.blit(statusBarSurface, statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.085)))
 
     def render_random_words(self):
@@ -145,13 +150,29 @@ class Game:
 
     def display_score(self):
         if self.comparelist:
-            self.percentageScoreText = "Accuracy: " + str(round(100 * sum(self.comparelist) / len(self.comparelist), 2)) + "%"
-            self.wordsPerMinuteText = "WPM: " + str(sum(self.comparelist))
+            self.percentageScore = round(100 * sum(self.comparelist) / len(self.comparelist), 2)
+            self.wpmScore = sum(self.comparelist)
+            self.percentageScoreText = "Accuracy: " + str(self.percentageScore) + "%"
+            self.wordsPerMinuteText = "WPM: " + str(self.wpmScore)
 
-            percentageScoreSurface = self.bigFont.render(self.percentageScoreText, True, self.fontColor)
+            if self.percentageScore >= 95:
+                percentageColor = (0, 255, 0)
+            elif self.percentageScore >= 85:
+                percentageColor = (255, 255, 0)
+            else:
+                percentageColor = (255, 0, 0)
+
+            if self.wpmScore >= 100:
+                wpmColor = (0, 255, 0)
+            elif self.wpmScore >= 75:
+                wpmColor = (255, 255, 0)
+            else:
+                wpmColor = (255, 0, 0)
+
+            percentageScoreSurface = self.bigFont.render(self.percentageScoreText, True, percentageColor)
             self.screen.blit(percentageScoreSurface, percentageScoreSurface.get_rect(center = (self.width // 2 , self.height // 1.8)))
 
-            wpmSurface = self.bigFont.render(self.wordsPerMinuteText, True, self.fontColor)
+            wpmSurface = self.bigFont.render(self.wordsPerMinuteText, True, wpmColor)
             self.screen.blit(wpmSurface, wpmSurface.get_rect(center = (self.width // 2 , self.height // 1.55)))
 
             infoSurface = self.bigFont.render("Hit Enter to Restart", True, self.fontColor)
@@ -196,6 +217,8 @@ class Game:
             self.commandText = ""
         elif event.key == self.pygame.K_RETURN:
             self.submit_command()
+        elif event.key == self.pygame.K_BACKSPACE:
+            self.pop_command_text()
         else:
             self.insert_command_text(event)
 
@@ -232,6 +255,9 @@ class Game:
 
     def pop_text(self):
         self.text = self.text[:-1]
+
+    def pop_command_text(self):
+        self.commandText = self.commandText[:-1]
 
     def pop_word(self):
         if self.randomWordsList:
