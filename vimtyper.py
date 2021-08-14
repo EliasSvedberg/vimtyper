@@ -19,6 +19,7 @@ class Game:
         self.pygame.display.set_caption("VimTyper")
         self.mode = "normal"
         self.text = ""
+        self.help = False
         self.commandText = ""
         self.timerText = "1:00"
         self.randomWordsList = []
@@ -59,9 +60,12 @@ class Game:
 
             #set frames/second
             self.draw()
-            self.render_random_words()
-            self.render_text()
-            self.render_timer()
+            if not self.help:
+                self.render_random_words()
+                self.render_text()
+                self.render_timer()
+            else:
+                self.render_help()
             self.render_status_bar()
             if self.mode == "command":
                 self.render_command_text()
@@ -75,6 +79,7 @@ class Game:
     def reset_game(self):
         self.mode = "normal"
         self.text = ""
+        self.help = False
         self.timerText = "1:00"
         self.randomWordsList = []
         self.change = False
@@ -112,11 +117,14 @@ class Game:
         self.delete_command_text()
 
     def perform_command(self):
-        pass
         if self.commandText == ":restart":
             self.reset_game()
         elif self.commandText == ":help":
-            print("you are out of luck, JK. adding some help soon")
+            self.help = True
+            print("help mode active")
+        elif self.commandText == ":q":
+            self.mode = "normal"
+            self.help = False
         else:
             print("You entered a bad command")
 
@@ -126,6 +134,27 @@ class Game:
         else:
             self.comparelist.append(0)
 
+    def render_help(self):
+        helpTextList = ["Normal mode:",
+                    "<cc>: Cut text -> Insert mode",
+                    "<dd>: Delete text -> normal mode",
+                    "Command mode:",
+                    "help: Help menu",
+                    "restart: Restart game",
+                    "Insert mode:",
+                    "<ESC>: -> Normal mode"
+                    ]
+        stringVertLoc = 0
+        padding = 15
+        for index, line in enumerate(helpTextList):
+            if line in ("Insert mode:", "Normal mode:", "Command mode:"):
+                helpSurface = self.bigFont.render(line, True, self.fontColor)
+                self.screen.blit(helpSurface, helpSurface.get_rect(topleft = (self.width // 4, self.height // 6 + stringVertLoc)))
+                stringVertLoc += self.bigFont.get_height() + padding
+            else:
+                helpSurface = self.font.render(line, True, self.fontColor)
+                self.screen.blit(helpSurface, helpSurface.get_rect(topleft = (self.width // 4, self.height // 6 + stringVertLoc)))
+                stringVertLoc += self.font.get_height() + padding
     def render_text(self):
         textSurface = self.font.render(self.text, True, self.fontColor)
         self.screen.blit(textSurface, textSurface.get_rect(center = (self.width // 2, self.height // 3)))
@@ -146,7 +175,6 @@ class Game:
         else:
             self.timerText = "0:00"
             self.displayScoreVar = True
-            self.mode = "normal"
 
     def display_score(self):
         if self.comparelist:
@@ -175,7 +203,7 @@ class Game:
             wpmSurface = self.bigFont.render(self.wordsPerMinuteText, True, wpmColor)
             self.screen.blit(wpmSurface, wpmSurface.get_rect(center = (self.width // 2 , self.height // 1.55)))
 
-            infoSurface = self.bigFont.render("Hit Enter to Restart", True, self.fontColor)
+            infoSurface = self.bigFont.render("Hit ESC+Enter to Restart", True, self.fontColor)
             self.screen.blit(infoSurface, infoSurface.get_rect(center = (self.width // 2 , self.height // 1.3)))
 
     def render_timer(self):
