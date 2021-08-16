@@ -19,10 +19,15 @@ class Game:
         self.pygame.display.set_caption("VimTyper")
         self.mode = "normal"
         self.text = ""
+        self.gameEnded = False
         self.help = False
         self.commandText = ""
         self.timerText = "1:00"
         self.randomWordsList = []
+        self.unformattedTimer = 60
+        self.randomWordsListStat = []
+        self.randomWordsListStatComp = []
+        self.dynamicMode = True
         self.change = False
         self.delete = False
         self.fontSize = 30
@@ -64,15 +69,18 @@ class Game:
                 self.render_random_words()
                 self.render_text()
                 self.render_timer()
+                if self.displayScoreVar:
+                    self.display_score()
+                else:
+                    if self.start_ticks:
+                        self.update_timer()
             else:
+                self.draw()
                 self.render_help()
             self.render_status_bar()
             if self.mode == "command":
                 self.render_command_text()
-            if self.start_ticks:
-                self.update_timer()
-            if self.displayScoreVar:
-                self.display_score()
+            self.check_game_status()
             self.update()
             self.clock.tick(self.fps)
 
@@ -82,7 +90,10 @@ class Game:
         self.help = False
         self.timerText = "1:00"
         self.randomWordsList = []
+        self.randomWordsListStat = []
+        self.randomWordsListStatComp = []
         self.change = False
+        self.gameEnded = False
         self.delete = False
         self.generate_random_sample(5)
         self.start_ticks = None
@@ -91,7 +102,9 @@ class Game:
 
     def generate_random_sample(self, count):
         self.randomWordsList.extend(random.sample(self.wordArr, count))
-
+        for i in range (count):
+            self.randomWordsListStat.append(random.sample(self.wordArr, 8))
+        self.randomWordsListStatComp = sum(self.randomWordsListStat, [])
     def render_status_bar(self):
         statusBarSurface = self.midFont.render(self.mode.upper(), True, (0, 0, 0))
         if self.mode in ("normal", "command"):
@@ -103,13 +116,21 @@ class Game:
         self.screen.blit(statusBarSurface, statusBarSurface.get_rect(bottomleft = (self.width // 40 , self.height // 1.085)))
 
     def render_random_words(self):
-        randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
-        self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 4 , self.height // 6)))
+        if self.dynamicMode:
+            randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
+            self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 4 , self.height // 6)))
+        else:
+            for i, line in enumerate(self.randomWordsListStat):
+                lineText = " ".join(line)
+                randomWordsSurface = self.font.render(lineText, True, self.fontColor)
+                self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 8 , self.height // 6 + i * self.font.get_height())))
 
     def submit_word(self):
-        self.compare()
+        if not self.gameEnded:
+            self.compare()
         self.pop_word()
-        self.generate_random_sample(1)
+        if self.dynamicMode:
+            self.generate_random_sample(1)
         self.delete_text()
 
     def submit_command(self):
@@ -121,18 +142,36 @@ class Game:
             self.reset_game()
         elif self.commandText == ":help":
             self.help = True
-            print("help mode active")
         elif self.commandText == ":q":
             self.mode = "normal"
             self.help = False
+        elif self.commandText == ":mode static":
+            self.dynamicMode = False
+            self.reset_game()
+        elif self.commandText == ":mode dynamic":
+            self.dynamicMode = True
+            self.reset_game()
         else:
             print("You entered a bad command")
 
     def compare(self):
-        if self.text == self.randomWordsList[0]:
-            self.comparelist.append(1)
+        if self.dynamicMode:
+            if self.text == self.randomWordsList[0]:
+                self.comparelist.append(1)
+            else:
+                self.comparelist.append(0)
         else:
-            self.comparelist.append(0)
+            if self.randomWordsListStatComp:
+                if self.text == self.randomWordsListStatComp[0]:
+                    self.comparelist.append(1)
+                else:
+                    self.comparelist.append(0)
+
+    def check_game_status(self):
+        if not self.dynamicMode:
+            if not self.randomWordsListStatComp:
+                self.gameEnded = True
+                self.displayScoreVar = True
 
     def render_help(self):
         helpTextList = ["Normal mode:",
@@ -157,7 +196,7 @@ class Game:
                 stringVertLoc += self.font.get_height() + padding
     def render_text(self):
         textSurface = self.font.render(self.text, True, self.fontColor)
-        self.screen.blit(textSurface, textSurface.get_rect(center = (self.width // 2, self.height // 3)))
+        self.screen.blit(textSurface, textSurface.get_rect(center = (self.width // 2, self.height // (3 if self.dynamicMode else 1.5))))
 
     def render_command_text(self):
         commandTextSurface = self.font.render(self.commandText, True, (250, 249, 246))
@@ -175,13 +214,20 @@ class Game:
         else:
             self.timerText = "0:00"
             self.displayScoreVar = True
+            self.gameEnded = True
 
     def display_score(self):
         if self.comparelist:
-            self.percentageScore = round(100 * sum(self.comparelist) / len(self.comparelist), 2)
-            self.wpmScore = sum(self.comparelist)
-            self.percentageScoreText = "Accuracy: " + str(self.percentageScore) + "%"
-            self.wordsPerMinuteText = "WPM: " + str(self.wpmScore)
+            if self.dynamicMode:
+                self.percentageScore = round(100 * sum(self.comparelist) / len(self.comparelist), 2)
+                self.wpmScore = sum(self.comparelist)
+                self.percentageScoreText = "Accuracy: " + str(self.percentageScore) + "%"
+                self.wordsPerMinuteText = "WPM: " + str(self.wpmScore)
+            else:
+                self.percentageScore = round(100 * sum(self.comparelist) / len(self.comparelist), 2)
+                self.wpmScore = round(60 * sum(self.comparelist) / (60 - self.unformattedTimer), 2)
+                self.percentageScoreText = "Accuracy: " + str(self.percentageScore) + "%"
+                self.wordsPerMinuteText = "WPM: " + str(self.wpmScore)
 
             if self.percentageScore >= 95:
                 percentageColor = (0, 255, 0)
@@ -242,7 +288,7 @@ class Game:
     def command_mode(self, event):
         if event.key == self.pygame.K_ESCAPE:
             self.mode = "normal"
-            self.commandText = ""
+            self.delete_command_text()
         elif event.key == self.pygame.K_RETURN:
             self.submit_command()
         elif event.key == self.pygame.K_BACKSPACE:
@@ -288,8 +334,12 @@ class Game:
         self.commandText = self.commandText[:-1]
 
     def pop_word(self):
-        if self.randomWordsList:
-            self.randomWordsList.pop(0)
+        if self.dynamicMode:
+            if self.randomWordsList:
+                self.randomWordsList.pop(0)
+        else:
+            if self.randomWordsListStatComp:
+                self.randomWordsListStatComp.pop(0)
 
     def update(self):
         self.pygame.display.update()
