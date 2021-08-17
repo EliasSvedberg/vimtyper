@@ -1,4 +1,5 @@
 import pygame as pygame, sys
+from staticmode import Word
 import wordlist
 import random
 import time
@@ -102,9 +103,13 @@ class Game:
 
     def generate_random_sample(self, count):
         self.randomWordsList.extend(random.sample(self.wordArr, count))
-        for i in range (count):
-            self.randomWordsListStat.append(random.sample(self.wordArr, 8))
-        self.randomWordsListStatComp = sum(self.randomWordsListStat, [])
+        for i in range(64):
+            obj = Word(random.choice(self.wordArr), i, False)
+            if obj.index == 0:
+                obj.current = True
+            self.randomWordsListStat.append(obj)
+            self.randomWordsListStatComp.append(obj)
+
     def render_status_bar(self):
         statusBarSurface = self.midFont.render(self.mode.upper(), True, (0, 0, 0))
         if self.mode in ("normal", "command"):
@@ -120,10 +125,23 @@ class Game:
             randomWordsSurface = self.font.render(" ".join(self.randomWordsList) , True, self.fontColor)
             self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 4 , self.height // 6)))
         else:
-            for i, line in enumerate(self.randomWordsListStat):
-                lineText = " ".join(line)
-                randomWordsSurface = self.font.render(lineText, True, self.fontColor)
-                self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 8 , self.height // 6 + i * self.font.get_height())))
+            # for i, line in enumerate(self.randomWordsListStat):
+            #     lineText = " ".join(line)
+            #     randomWordsSurface = self.font.render(lineText, True, self.fontColor)
+            #     self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 8 , self.height // 6 + i * self.font.get_height())))
+            yPos = 0
+            xPos = 0
+            randomWordsSurface = None
+            for ind, instance in enumerate(self.randomWordsListStat):
+                # fix how to display and with colors
+                if (ind + 1) % 8 == 0:
+                    yPos += self.font.get_height()
+                    xPos = 0
+                else:
+                    if randomWordsSurface:
+                        xPos += randomWordsSurface.get_width() + 5
+                randomWordsSurface = self.font.render(instance.word, True, instance.get_color())
+                self.screen.blit(randomWordsSurface, randomWordsSurface.get_rect(midleft = (self.width // 8 + xPos , self.height // 6 + yPos)))
 
     def submit_word(self):
         if not self.gameEnded:
@@ -162,10 +180,24 @@ class Game:
                 self.comparelist.append(0)
         else:
             if self.randomWordsListStatComp:
-                if self.text == self.randomWordsListStatComp[0]:
+                if self.text == self.randomWordsListStatComp[0].word:
                     self.comparelist.append(1)
+                    self.randomWordsListStatComp[0].visited = True
+                    self.randomWordsListStatComp[0].correct = True
                 else:
                     self.comparelist.append(0)
+                    self.randomWordsListStatComp[0].visited = True
+                    self.randomWordsListStatComp[0].correct = False
+
+                for w in self.randomWordsListStat:
+                    if w.get_index() == self.randomWordsListStatComp[0].get_index():
+                        w.visited = self.randomWordsListStatComp[0].visited
+                        w.correct = self.randomWordsListStatComp[0].correct
+                    if len(self.randomWordsListStatComp) > 1:
+                        if w.get_index() == self.randomWordsListStatComp[0].get_index() + 1:
+                            w.current = True
+
+
 
     def check_game_status(self):
         if not self.dynamicMode:
@@ -180,6 +212,7 @@ class Game:
                     "Command mode:",
                     "help: Help menu",
                     "restart: Restart game",
+                    "mode: static & dynamic -> switch modes",
                     "Insert mode:",
                     "<ESC>: -> Normal mode"
                     ]
@@ -194,6 +227,7 @@ class Game:
                 helpSurface = self.font.render(line, True, self.fontColor)
                 self.screen.blit(helpSurface, helpSurface.get_rect(topleft = (self.width // 4, self.height // 6 + stringVertLoc)))
                 stringVertLoc += self.font.get_height() + padding
+
     def render_text(self):
         textSurface = self.font.render(self.text, True, self.fontColor)
         self.screen.blit(textSurface, textSurface.get_rect(center = (self.width // 2, self.height // (3 if self.dynamicMode else 1.5))))
@@ -230,18 +264,18 @@ class Game:
                 self.wordsPerMinuteText = "WPM: " + str(self.wpmScore)
 
             if self.percentageScore >= 95:
-                percentageColor = (0, 255, 0)
+                percentageColor = (126, 173, 105)
             elif self.percentageScore >= 85:
-                percentageColor = (255, 255, 0)
+                percentageColor = (223, 192, 10)
             else:
-                percentageColor = (255, 0, 0)
+                percentageColor = (199, 17, 80)
 
             if self.wpmScore >= 100:
-                wpmColor = (0, 255, 0)
+                wpmColor = (126, 173, 105)
             elif self.wpmScore >= 75:
-                wpmColor = (255, 255, 0)
+                wpmColor = (223, 192, 10)
             else:
-                wpmColor = (255, 0, 0)
+                wpmColor = (199, 17, 80)
 
             percentageScoreSurface = self.bigFont.render(self.percentageScoreText, True, percentageColor)
             self.screen.blit(percentageScoreSurface, percentageScoreSurface.get_rect(center = (self.width // 2 , self.height // 1.8)))
